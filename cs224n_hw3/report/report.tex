@@ -1,0 +1,86 @@
+\documentclass{article}
+
+\usepackage{fullpage,enumitem,amsmath,graphicx,amssymb}
+
+\title{CS 224n Assignment \#3: Dependency Parsing}
+\author{Heehoon Kim}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Machine Learning \& Neural Networks}
+
+\begin{enumerate}[label=(\alph*)]
+\item
+\begin{enumerate}[label=\roman*.]
+\item Using momentum helps to cancel out fluctuation by bumps in the contour of a loss function and reinforce the vector component to downward direction.
+\item Parameters with small gradients will get larger updates, which in turn accelerates convergence. Parameters with large gradients will slow down, so overshooting can be prevented.
+\end{enumerate}
+\item
+\begin{enumerate}[label=\roman*.]
+\item $\gamma$ should be $\frac{1}{1-p_{drop}}$ to maintain overall magnitude of values in the layer.
+\item During evaluation, deterministic results are preferred.
+\end{enumerate}
+\end{enumerate}
+
+\section{Neural Transition-Based Dependency Parsing}
+
+\begin{enumerate}[label=(\alph*)]
+\item Here are steps.
+\begin{center}
+\footnotesize
+\begin{tabular}{c|c|c|c}
+Stack & Buffer & New dependency & Transition \\
+\hline
+$\lbrack$ROOT$\rbrack$ & $\lbrack$I, parsed, this, sentence, correctly$\rbrack$ & & Initial Configuration \\
+$\lbrack$ROOT, I$\rbrack$ & $\lbrack$parsed, this, sentence, correctly$\rbrack$ & & SHIFT \\
+$\lbrack$ROOT, I, parsed$\rbrack$ & $\lbrack$this, sentence, correctly$\rbrack$ & & SHIFT \\
+$\lbrack$ROOT, parsed$\rbrack$ & $\lbrack$this, sentence, correctly$\rbrack$ & parsed $\rightarrow$ I & LEFT-ARC \\
+$\lbrack$ROOT, parsed, this$\rbrack$ & $\lbrack$sentence, correctly$\rbrack$ & & SHIFT \\
+$\lbrack$ROOT, parsed, this, sentence$\rbrack$ & $\lbrack$correctly$\rbrack$ & & SHIFT \\
+$\lbrack$ROOT, parsed, sentence$\rbrack$ & $\lbrack$correctly$\rbrack$ & sentence $\rightarrow$ this & LEFT-ARC \\
+$\lbrack$ROOT, parsed$\rbrack$ & $\lbrack$correctly$\rbrack$ & parsed $\rightarrow$ sentence & RIGHT-ARC \\
+$\lbrack$ROOT, parsed, correctly$\rbrack$ & $\lbrack$$\rbrack$ & & SHIFT \\
+$\lbrack$ROOT, parsed$\rbrack$ & $\lbrack$$\rbrack$ & parsed $\rightarrow$ correctly & RIGHT-ARC \\
+$\lbrack$ROOT$\rbrack$ & $\lbrack$$\rbrack$ & ROOT $\rightarrow$ parsed & RIGHT-ARC \\
+\end{tabular}
+\end{center}
+\item At each step, one word goes from the buffer to the stack OR one word is popped from the stack. So it takes $2n$ steps.
+\end{enumerate}
+
+\begin{enumerate}[label=(\alph*),start=5]
+\item Achieved UAS of 88.52 on the dev set and UAS of 89.11 on the test set.
+\item
+\begin{enumerate}[label=\roman*.]
+\item
+\begin{itemize}
+\item \textbf{Error type}: Verb Phrase Attachment Error
+\item \textbf{Incorrect dependency}: wedding $\rightarrow$ fearing
+\item \textbf{Correct dependency}: heading $\rightarrow$ fearing
+\end{itemize}
+\item
+\begin{itemize}
+\item \textbf{Error type}: Coordination Attachment Error
+\item \textbf{Incorrect dependency}: makes $\rightarrow$ rescue
+\item \textbf{Correct dependency}: rush $\rightarrow$ rescue
+\end{itemize}
+\item 
+\begin{itemize}
+\item \textbf{Error type}: Prepositional Phrase Attachment Error
+\item \textbf{Incorrect dependency}: named $\rightarrow$ Midland
+\item \textbf{Correct dependency}: guy $\rightarrow$ Midland
+\end{itemize}
+\item 
+\begin{itemize}
+\item \textbf{Error type}: Modifier Attachment Error
+\item \textbf{Incorrect dependency}: elements $\rightarrow$ most
+\item \textbf{Correct dependency}: crucial $\rightarrow$ most
+\end{itemize}
+\end{enumerate}
+\end{enumerate}
+
+
+
+\end{document}
