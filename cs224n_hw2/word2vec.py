@@ -18,6 +18,8 @@ def sigmoid(x):
 
     ### YOUR CODE HERE (~1 Line)
 
+    s = 1 / (1 + np.exp(-x))
+
     ### END YOUR CODE
 
     return s
@@ -61,6 +63,15 @@ def naiveSoftmaxLossAndGradient(
     ### Please use the provided softmax function (imported earlier in this file)
     ### This numerically stable implementation helps you avoid issues pertaining
     ### to integer overflow. 
+
+    y_hat = softmax(outsideVectors.dot(centerWordVec))
+    loss = -np.log(y_hat[outsideWordIdx])
+
+    gradOutsideVecs = np.outer(y_hat, centerWordVec)
+    gradOutsideVecs[outsideWordIdx] -= centerWordVec
+
+    y_hat[outsideWordIdx] -= 1
+    gradCenterVec = y_hat.dot(outsideVectors)
 
     ### END YOUR CODE
 
@@ -109,6 +120,17 @@ def negSamplingLossAndGradient(
 
     ### Please use your implementation of sigmoid in here.
 
+    uovc = outsideVectors[outsideWordIdx].dot(centerWordVec)
+    ukvc = outsideVectors[negSampleWordIndices].dot(centerWordVec)
+
+    loss = -np.log(sigmoid(uovc)) - np.sum(np.log(sigmoid(-ukvc)))
+
+    gradCenterVec = (sigmoid(uovc) - 1) * outsideVectors[outsideWordIdx] + (1 - sigmoid(-ukvc)).dot(outsideVectors[negSampleWordIndices])
+
+    gradOutsideVecs = np.zeros_like(outsideVectors)
+    gradOutsideVecs[outsideWordIdx] = (sigmoid(uovc) - 1) * centerWordVec
+    np.add.at(gradOutsideVecs, negSampleWordIndices, np.outer(1 - sigmoid(-ukvc), centerWordVec))
+
     ### END YOUR CODE
 
     return loss, gradCenterVec, gradOutsideVecs
@@ -154,6 +176,15 @@ def skipgram(currentCenterWord, windowSize, outsideWords, word2Ind,
     gradOutsideVectors = np.zeros(outsideVectors.shape)
 
     ### YOUR CODE HERE (~8 Lines)
+
+    vi = word2Ind[currentCenterWord]
+    centerWordVec = centerWordVectors[vi]
+    for w in outsideWords:
+        wi = word2Ind[w]
+        loss_single, gradCenterVec, gradOutsideVec = word2vecLossAndGradient(centerWordVec, wi, outsideVectors, dataset)
+        loss += loss_single
+        gradCenterVecs[vi] += gradCenterVec
+        gradOutsideVectors += gradOutsideVec
 
     ### END YOUR CODE
     
