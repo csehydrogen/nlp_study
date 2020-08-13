@@ -161,6 +161,11 @@ class VocabEntry(object):
         ###         https://pytorch.org/docs/stable/tensors.html#torch.Tensor.contiguous
         ###         https://pytorch.org/docs/stable/tensors.html#torch.Tensor.view
 
+        sents = self.words2charindices(sents) # (# sents, # words in sent, # chars in word)
+        sents = pad_sents_char(sents, self.char_pad) # (# sents, max sent len, max word len)
+        sents = torch.tensor(sents, dtype=torch.long, device=device).transpose(0, 1) # (max_sentence_length, batch_size, max_word_length)
+        return sents
+
         ### END YOUR CODE
 
     def to_input_tensor(self, sents: List[List[str]], device: torch.device) -> torch.Tensor:
