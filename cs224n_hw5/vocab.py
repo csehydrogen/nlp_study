@@ -163,7 +163,7 @@ class VocabEntry(object):
 
         sents = self.words2charindices(sents) # (# sents, # words in sent, # chars in word)
         sents = pad_sents_char(sents, self.char_pad) # (# sents, max sent len, max word len)
-        sents = torch.tensor(sents, dtype=torch.long, device=device).transpose(0, 1) # (max_sentence_length, batch_size, max_word_length)
+        sents = torch.tensor(sents, dtype=torch.long, device=device).transpose(0, 1).contiguous() # (max_sentence_length, batch_size, max_word_length)
         return sents
 
         ### END YOUR CODE

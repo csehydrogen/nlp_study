@@ -7,7 +7,7 @@ CS224N 2019-20: Homework 5
 
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 class CharDecoder(nn.Module):
     def __init__(self, hidden_size, char_embedding_size=50, target_vocab=None):
@@ -36,6 +36,11 @@ class CharDecoder(nn.Module):
         ### YOUR CODE HERE for part 2a
         ### TODO - Implement the forward pass of the character decoder.
 
+        x = self.decoderCharEmb(input) # (length, batch_size, char_embedding_size)
+        output, (h_n, c_n) = self.charDecoder(x, dec_hidden) # (length, batch_size, hidden_size)
+        s_t = self.char_output_projection(output) # (length, batch_size, vocab_size)
+        return s_t, (h_n, c_n)
+
         ### END YOUR CODE
 
     def train_forward(self, char_sequence, dec_hidden=None):
@@ -53,6 +58,12 @@ class CharDecoder(nn.Module):
         ###       - char_sequence corresponds to the sequence x_1 ... x_{n+1} (e.g., <START>,m,u,s,i,c,<END>). Read the handout about how to construct input and target sequence of CharDecoderLSTM.
         ###       - Carefully read the documentation for nn.CrossEntropyLoss and our handout to see what this criterion have already included:
         ###             https://pytorch.org/docs/stable/nn.html#crossentropyloss
+
+        scores, _ = self.forward(char_sequence[:-1], dec_hidden) # (length, batch_size, vocab_size)
+        scores = scores.transpose(1, 2) # (length, vocab_size, batch_size)
+        target = char_sequence[1:] # (length, batch_size)
+        loss = F.cross_entropy(scores, target, reduction='sum') # scalar
+        return loss
 
         ### END YOUR CODE
 
@@ -75,6 +86,29 @@ class CharDecoder(nn.Module):
         ###      - You may find torch.argmax or torch.argmax useful
         ###      - We use curly brackets as start-of-word and end-of-word characters. That is, use the character '{' for <START> and '}' for <END>.
         ###        Their indices are self.target_vocab.start_of_word and self.target_vocab.end_of_word, respectively.
+
+        h_t, c_t = initialStates
+        batch_size = h_t.shape[1]
+
+        current_char = torch.tensor([[self.target_vocab.start_of_word] * batch_size], device = device) # (1, batch_size)
+        current_chars = []
+        for t in range(max_length):
+            scores, (h_t, c_t) = self.forward(current_char, (h_t, c_t)) # (1, batch_size, vocab_size)
+            current_char = F.softmax(scores, dim = 2).argmax(dim = 2) # (1, batch_size)
+            current_chars.append(current_char)
+
+        # current_chars = max_length x (1, batch_size)
+        words = torch.cat(current_chars).transpose(0, 1).tolist() # (batch_size, max_length)
+        decodedWords = []
+        id2char = lambda x: self.target_vocab.id2char[x]
+        for word in words:
+            word = ''.join(map(id2char, word))
+            idx = word.find(id2char(self.target_vocab.end_of_word))
+            if idx != -1:
+                word = word[:idx]
+            decodedWords.append(word)
+
+        return decodedWords
 
         ### END YOUR CODE
 
